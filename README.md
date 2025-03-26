@@ -1,14 +1,24 @@
-# Survey Builder App
+# Survey Builder 🛠️
 
-A user-friendly Streamlit app to build and edit surveys using data from Supabase.
+An interactive **Streamlit** application for smart, quick and user-friendly survey creation.  
+The app supports:
 
-## Features
-- Select categories & subcategories
-- Add/edit open and closed questions
-- Add options dynamically
-- Export to Word (.docx)
+- ✨ Loading questions from a cloud database (Supabase)
+- 📝 Adding custom questions
+- 📤 Exporting the survey as a ready-to-use Word document
 
-## How to Run
-```bash
-streamlit run app.py
-```
+---
+
+## 🧰 Technologies Used
+
+- **Python** – main programming language  
+- **Streamlit** – for interactive UI  
+- **Supabase** – cloud database (PostgreSQL via REST API)  
+- **Pandas** – to manage and manipulate tabular data  
+- **python-docx** – to generate Word documents  
+- **re** – for pattern matching and text search (Regex)
+
+---
+
+## 👨‍💻 Developer
+Shlomi Shor
