@@ -4,8 +4,8 @@ import pandas as pd
 from docx import Document
 import re
 
-url = "https://aexrxrhizqvkrhbyqsed.supabase.co"
-key = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFleHJ4cmhpenF2a3JoYnlxc2VkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDI3MjQxMzcsImV4cCI6MjA1ODMwMDEzN30.rzLHX6X47J2CzPwpCEvkXd_7QvORMadr7ETk-2gXyOE"
+url = st.secrets["supabase"]["url"]
+key = st.secrets["supabase"]["key"]
 supabase: Client = create_client(url, key)
 
 st.set_page_config(page_title="Survey Builder", layout="centered")
