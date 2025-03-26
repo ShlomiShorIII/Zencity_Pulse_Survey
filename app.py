@@ -9,6 +9,7 @@ key = st.secrets["supabase"]["key"]
 supabase: Client = create_client(url, key)
 
 st.set_page_config(page_title="Survey Builder", layout="centered")
+st.image("assets/zencity_logo.png", width=150)
 st.title("📝 Survey Builder")
 
 survey_title = st.text_input("Survey Title")
