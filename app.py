@@ -10,7 +10,7 @@ supabase: Client = create_client(url, key)
 
 st.set_page_config(page_title="Survey Builder", layout="centered")
 st.image("assets/zencity_logo.png", width=150)
-st.title("📝 Survey Builder")
+st.title("📝 Pulse Survey Builder")
 
 survey_title = st.text_input("Survey Title")
 survey_intro = st.text_area("Survey Introduction")
