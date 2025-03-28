@@ -110,6 +110,12 @@ for field in sorted(insert_fields):
     replacements[field] = st.text_input(f"{field}:")
 
 if st.button("📤 Export to Word"):
+    for question in st.session_state.db_questions:
+        q_key = question["id"]
+        q_type, q_id_str = q_key.split("_")  
+        q_id = int(q_id_str)
+        supabase.rpc("increment_print_count", {"q_id": q_id, "q_type": q_type.lower()}).execute()
+
     doc = Document()
     doc.add_heading(survey_title, 0)
     doc.add_paragraph(survey_intro)
