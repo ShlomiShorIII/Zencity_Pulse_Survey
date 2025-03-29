@@ -116,9 +116,6 @@ if st.button("📤 Export to Word"):
         q_id = int(q_id_str)
         supabase.rpc("increment_print_count", {"q_id": q_id, "q_type": q_type.lower()}).execute()
        
-        response = supabase.rpc("increment_print_count", {"q_id": q_id, "q_type": q_type.lower()}).execute()
-        st.write("RPC response:", response)
-    
     doc = Document()
     doc.add_heading(survey_title, 0)
     doc.add_paragraph(survey_intro)
