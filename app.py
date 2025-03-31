@@ -22,6 +22,15 @@ def load_data():
     links = supabase.table("category_subcategory").select("*").execute().data
     return pd.DataFrame(cats), pd.DataFrame(subs), pd.DataFrame(links)
 
+if st.button("🔄 רענן קטגוריות ותתי-קטגוריות מהמסד"):
+    st.session_state["force_reload"] = True
+
+if "force_reload" not in st.session_state:
+    st.session_state["force_reload"] = False
+
+categories_df, subcategories_df, cat_sub_links_df = load_data()
+st.session_state["force_reload"] = False
+
 categories_df, subcategories_df, cat_sub_links_df = load_data()
 cat_sub_links = cat_sub_links_df.to_dict(orient="records")
 
@@ -49,8 +58,17 @@ def load_questions(cat_id, sub_id):
 if "db_questions" not in st.session_state:
     st.session_state["db_questions"] = []
 
+if "force_reload_questions" not in st.session_state:
+    st.session_state["force_reload_questions"] = False
+
 if selected_sub_id:
+    if st.button("🔄 רענן שאלות מתתי-הקטגוריה"):
+        st.session_state["force_reload_questions"] = True
+        st.experimental_rerun()
+
     open_qs, closed_qs = load_questions(selected_cat_id, selected_sub_id)
+    st.session_state["force_reload_questions"] = False
+    
     for q in open_qs:
         key = f"open_{q['open_question_id']}"
         if st.checkbox(f"[Open] {q['question_text']}", key=key):
