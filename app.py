@@ -15,22 +15,33 @@ st.title("📝 Pulse Survey Builder")
 survey_title = st.text_input("Survey Title")
 survey_intro = st.text_area("Survey Introduction")
 
-@st.cache_data
+@st.cache_data(show_spinner=False)
 def load_data():
     cats = supabase.table("categories").select("*").execute().data
     subs = supabase.table("subcategories").select("*").execute().data
     links = supabase.table("category_subcategory").select("*").execute().data
     return pd.DataFrame(cats), pd.DataFrame(subs), pd.DataFrame(links)
 
-if st.button("🔄 Refresh categories and subcategories from the database"):
-    st.session_state["force_reload"] = True
+def load_questions(cat_id, sub_id):
+    open_qs = supabase.table("open_questions").select("open_question_id, question_text")\
+        .eq("category_id", cat_id).eq("subcategory_id", sub_id).execute().data
+    closed_qs = supabase.table("closed_questions").select("closed_question_id, question_text")\
+        .eq("category_id", cat_id).eq("subcategory_id", sub_id).execute().data
+    return open_qs, closed_qs
 
-if "force_reload" not in st.session_state:
-    st.session_state["force_reload"] = False
+def add_other_button(q, i):
+    if "Other" not in q["options"]:
+        if st.button("\u2795 Add 'Other' option", key=f"add_other_{i}"):
+            q["options"].append("Other")
+            st.rerun()
 
-categories_df, subcategories_df, cat_sub_links_df = load_data()
-st.session_state["force_reload"] = False
+if "db_questions" not in st.session_state:
+    st.session_state["db_questions"] = []
 
+if "new_questions" not in st.session_state:
+    st.session_state["new_questions"] = []
+
+# Load categories and subcategories
 categories_df, subcategories_df, cat_sub_links_df = load_data()
 cat_sub_links = cat_sub_links_df.to_dict(orient="records")
 
@@ -48,27 +59,12 @@ if not filtered_subs.empty:
 else:
     st.warning("No subcategories found for the selected category.")
 
-def load_questions(cat_id, sub_id):
-    open_qs = supabase.table("open_questions").select("open_question_id, question_text")\
-        .eq("category_id", cat_id).eq("subcategory_id", sub_id).execute().data
-    closed_qs = supabase.table("closed_questions").select("closed_question_id, question_text")\
-        .eq("category_id", cat_id).eq("subcategory_id", sub_id).execute().data
-    return open_qs, closed_qs
-
-if "db_questions" not in st.session_state:
-    st.session_state["db_questions"] = []
-
-if "force_reload_questions" not in st.session_state:
-    st.session_state["force_reload_questions"] = False
-
 if selected_sub_id:
-    if st.button("🔄 Refresh questions"):
-        st.session_state["force_reload_questions"] = True
+    if st.button("\ud83d\udd04 Refresh questions"):
         st.rerun()
 
     open_qs, closed_qs = load_questions(selected_cat_id, selected_sub_id)
-    st.session_state["force_reload_questions"] = False
-    
+
     for q in open_qs:
         key = f"open_{q['open_question_id']}"
         if st.checkbox(f"[Open] {q['question_text']}", key=key):
@@ -79,25 +75,20 @@ if selected_sub_id:
         answers = supabase.table("closed_questions_answers").select("answer_option")\
             .eq("closed_question_id", q['closed_question_id']).execute().data
         options = [a['answer_option'] for a in answers]
-    
+
         key = f"closed_{q['closed_question_id']}"
         if st.checkbox(f"[Closed] {q['question_text']}", key=key):
             if key not in [q['id'] for q in st.session_state.db_questions]:
-                question_data = {"id": key, "type": "Closed", "text": q['question_text'], "options": options}
-    
+                question_data = {"id": key, "type": "Closed", "text": q['question_text'], "options": options, "other": ""}
+
                 if "Other" in options:
                     other_input = st.text_input("Please specify:", key=f"{key}_other")
                     question_data["other"] = other_input
-                else:
-                    question_data["other"] = ""
-    
+
                 st.session_state.db_questions.append(question_data)
 
-if "new_questions" not in st.session_state:
-    st.session_state["new_questions"] = []
-
-if st.button("➕ Add Custom Question"):
-    st.session_state.new_questions.append({"type": "Open", "text": "", "options": []})
+if st.button("\u2795 Add Custom Question"):
+    st.session_state.new_questions.append({"type": "Open", "text": "", "options": [], "other": ""})
     st.rerun()
 
 st.subheader("Edit Questions")
@@ -114,28 +105,25 @@ for i, q in enumerate(st.session_state.db_questions + st.session_state.new_quest
         for j, opt in enumerate(q["options"]):
             cols = st.columns([5, 1])
             q["options"][j] = cols[0].text_input(f"Option {j+1}", value=opt, key=f"opt_{i}_{j}")
-            if cols[1].button("❌", key=f"delopt_{i}_{j}"):
+            if cols[1].button("\u274c", key=f"delopt_{i}_{j}"):
                 remove_indices.append(j)
 
-        if "Other" not in q["options"]:
-            if st.button("➕ Add 'Other' option", key=f"add_other_{i}"):
-                q["options"].append("Other")
-                st.rerun()
+        add_other_button(q, i)
 
         for index in sorted(remove_indices, reverse=True):
             q["options"].pop(index)
             st.rerun()
-            
-        if st.button("➕ Add Option", key=f"addopt_{i}"):
+
+        if st.button("\u2795 Add Option", key=f"addopt_{i}"):
             q["options"].append("")
             st.rerun()
 
-    edited_questions.append((q["type"], q["text"], q["options"]))
+    edited_questions.append((q["type"], q["text"], q["options"], q.get("other", "")))
 
 st.subheader("Fill Placeholders")
 insert_fields = set()
 pattern = r"{[iI]nsert (.*?)}"
-for qtype, text, opts in edited_questions:
+for qtype, text, opts, other in edited_questions:
     insert_fields.update(re.findall(pattern, text))
     for opt in opts:
         insert_fields.update(re.findall(pattern, opt))
@@ -144,24 +132,30 @@ replacements = {}
 for field in sorted(insert_fields):
     replacements[field] = st.text_input(f"{field}:")
 
-if st.button("📤 Export to Word"):
+if st.button("\ud83d\udce4 Export to Word"):
     for question in st.session_state.db_questions:
         q_key = question["id"]
-        q_type, q_id_str = q_key.split("_")  
+        q_type, q_id_str = q_key.split("_")
         q_id = int(q_id_str)
         supabase.rpc("increment_print_count", {"q_id": q_id, "q_type": q_type.lower()}).execute()
-       
+
     doc = Document()
     doc.add_heading(survey_title, 0)
     doc.add_paragraph(survey_intro)
     doc.add_heading("Questions", level=1)
-    for i, (qtype, text, options) in enumerate(edited_questions, 1):
+
+    for i, (qtype, text, options, other) in enumerate(edited_questions, 1):
         for k, v in replacements.items():
             text = text.replace(f"{{Insert {k}}}", v).replace(f"{{insert {k}}}", v)
             options = [opt.replace(f"{{Insert {k}}}", v).replace(f"{{insert {k}}}", v) for opt in options]
+            other = other.replace(f"{{Insert {k}}}", v).replace(f"{{insert {k}}}", v)
+
         doc.add_paragraph(f"{i}. ({qtype}) {text}", style="List Number")
         for opt in options:
             doc.add_paragraph(f"- {opt}", style="List Bullet")
+        if other:
+            doc.add_paragraph(f"- Other: {other}", style="List Bullet")
+
     doc.save("survey.docx")
     with open("survey.docx", "rb") as f:
-        st.download_button("📥 Download Survey", f, file_name="survey.docx")
+        st.download_button("\ud83d\udcc5 Download Survey", f, file_name="survey.docx")
