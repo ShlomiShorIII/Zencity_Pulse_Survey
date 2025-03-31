@@ -32,7 +32,7 @@ def load_questions(cat_id, sub_id):
 def add_other_button(q, i):
     if "Other" not in q["options"]:
         if st.button("\u2795 Add 'Other' option", key=f"add_other_{i}"):
-            q["options"].append("Other")
+            q["options"].append("Other_______________________________")
             st.rerun()
 
 if "db_questions" not in st.session_state:
