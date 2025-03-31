@@ -132,7 +132,7 @@ replacements = {}
 for field in sorted(insert_fields):
     replacements[field] = st.text_input(f"{field}:")
 
-if st.button("\ud83d\udce4 Export to Word"):
+if st.button("📤 Export to Word"):
     for question in st.session_state.db_questions:
         q_key = question["id"]
         q_type, q_id_str = q_key.split("_")
