@@ -79,10 +79,19 @@ if selected_sub_id:
         answers = supabase.table("closed_questions_answers").select("answer_option")\
             .eq("closed_question_id", q['closed_question_id']).execute().data
         options = [a['answer_option'] for a in answers]
+    
         key = f"closed_{q['closed_question_id']}"
         if st.checkbox(f"[Closed] {q['question_text']}", key=key):
             if key not in [q['id'] for q in st.session_state.db_questions]:
-                st.session_state.db_questions.append({"id": key, "type": "Closed", "text": q['question_text'], "options": options})
+                question_data = {"id": key, "type": "Closed", "text": q['question_text'], "options": options}
+    
+                if "Other" in options:
+                    other_input = st.text_input("Please specify:", key=f"{key}_other")
+                    question_data["other"] = other_input
+                else:
+                    question_data["other"] = ""
+    
+                st.session_state.db_questions.append(question_data)
 
 if "new_questions" not in st.session_state:
     st.session_state["new_questions"] = []
