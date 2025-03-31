@@ -116,12 +116,20 @@ for i, q in enumerate(st.session_state.db_questions + st.session_state.new_quest
             q["options"][j] = cols[0].text_input(f"Option {j+1}", value=opt, key=f"opt_{i}_{j}")
             if cols[1].button("❌", key=f"delopt_{i}_{j}"):
                 remove_indices.append(j)
+
+        if "Other" not in q["options"]:
+            if st.button("➕ Add 'Other' option", key=f"add_other_{i}"):
+                q["options"].append("Other")
+                st.rerun()
+
         for index in sorted(remove_indices, reverse=True):
             q["options"].pop(index)
             st.rerun()
+            
         if st.button("➕ Add Option", key=f"addopt_{i}"):
             q["options"].append("")
             st.rerun()
+
     edited_questions.append((q["type"], q["text"], q["options"]))
 
 st.subheader("Fill Placeholders")
