@@ -60,7 +60,7 @@ else:
     st.warning("No subcategories found for the selected category.")
 
 if selected_sub_id:
-    if st.button("\ud83d\udd04 Refresh questions"):
+    if st.button("🔁 Refresh questions"):
         st.rerun()
 
     open_qs, closed_qs = load_questions(selected_cat_id, selected_sub_id)
