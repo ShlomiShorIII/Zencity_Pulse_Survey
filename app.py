@@ -158,4 +158,4 @@ if st.button("📤 Export to Word"):
 
     doc.save("survey.docx")
     with open("survey.docx", "rb") as f:
-        st.download_button("\ud83d\udcc5 Download Survey", f, file_name="survey.docx")
+        st.download_button("Download Survey", f, file_name="survey.docx")
